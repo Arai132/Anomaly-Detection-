@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+dist/
+build/
+*.ipynb_checkpoints/
+models/*.joblib
+models/*.pkl
+data/raw/*
+data/processed/*
+reports/*.png
+reports/*.html
+.pytest_cache/
+.DS_Store
+
+# Claude Code — AI assistant files (not part of the project source)
+.claude/
+CLAUDE.md
+presentation.html

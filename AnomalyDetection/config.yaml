@@ -1,0 +1,46 @@
+data:
+  raw_path: data/raw
+  processed_path: data/processed
+  test_size: 0.2
+  random_state: 42
+
+detectors:
+  isolation_forest:
+    n_estimators: 100
+    contamination: 0.05
+    random_state: 42
+  lof:
+    n_neighbors: 20
+    contamination: 0.05
+  zscore:
+    threshold: 3.0
+  iqr:
+    multiplier: 1.5
+  autoencoder:
+    encoding_dim: 16
+    epochs: 50
+    batch_size: 32
+    threshold_percentile: 95
+  gaussian:
+    n_components: 1
+    covariance_type: full
+    threshold_percentile: 95
+  ensemble_stacking:
+    threshold_percentile: 95
+
+semi_supervised:
+  label_fraction: 0.1
+  anomaly_percentile: 90
+  normal_percentile: 20
+  max_iters: 3
+
+evaluation:
+  metrics:
+    - precision
+    - recall
+    - f1
+    - roc_auc
+  plots: true
+
+models:
+  save_path: models/

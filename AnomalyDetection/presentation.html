@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnomalyDetection — Codebase Overview</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3248;
+    --accent: #7c6af7;
+    --accent2: #5eead4;
+    --accent3: #f97316;
+    --accent4: #ec4899;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --code-bg: #0d1117;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0;
+    padding: 0 2rem; height: 52px;
+    overflow-x: auto;
+  }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.82rem;
+    padding: 0 1rem; height: 52px; display: flex; align-items: center;
+    white-space: nowrap; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav a:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── SECTIONS ── */
+  section {
+    min-height: 100vh; padding: 96px 2rem 4rem;
+    display: flex; flex-direction: column; justify-content: center;
+    max-width: 1100px; margin: 0 auto;
+  }
+  section + section { border-top: 1px solid var(--border); }
+
+  /* ── HERO ── */
+  #hero { text-align: center; gap: 1.5rem; }
+  .hero-badge {
+    display: inline-block; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 100px; padding: 0.3rem 1rem; font-size: 0.78rem;
+    color: var(--accent2); letter-spacing: .08em; text-transform: uppercase;
+  }
+  h1 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; line-height: 1.1;
+       background: linear-gradient(135deg, #a78bfa, #7c6af7, #5eead4);
+       -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero-sub { color: var(--muted); font-size: 1.15rem; max-width: 620px; margin: 0 auto; }
+  .pill-row { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin-top: .5rem; }
+  .pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: .25rem .75rem; font-size: .78rem; color: var(--muted);
+  }
+
+  /* ── HEADINGS ── */
+  h2 { font-size: 1.9rem; font-weight: 700; margin-bottom: 1.5rem;
+       display: flex; align-items: center; gap: .6rem; }
+  h2 .num { color: var(--accent); font-size: 1rem; font-weight: 500; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .5rem; color: var(--text); }
+  p { color: var(--muted); margin-bottom: .8rem; }
+
+  /* ── CARDS GRID ── */
+  .grid { display: grid; gap: 1rem; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.4rem;
+    transition: border-color .2s, transform .2s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card-icon { font-size: 1.6rem; margin-bottom: .6rem; }
+  .card h3 { font-size: 1rem; margin-bottom: .4rem; }
+  .card p { font-size: .88rem; margin: 0; }
+  .tag {
+    display: inline-block; font-size: .7rem; padding: .15rem .55rem;
+    border-radius: 4px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; margin-bottom: .5rem;
+  }
+  .tag-dl  { background: #7c6af720; color: #a78bfa; border: 1px solid #7c6af740; }
+  .tag-stat { background: #5eead420; color: #5eead4; border: 1px solid #5eead440; }
+  .tag-tree { background: #f9731620; color: #fb923c; border: 1px solid #f9731640; }
+  .tag-ens  { background: #ec489920; color: #f472b6; border: 1px solid #ec489940; }
+  .tag-semi { background: #22c55e20; color: #4ade80; border: 1px solid #22c55e40; }
+
+  /* ── FILE TREE ── */
+  .filetree {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: .85rem; line-height: 2;
+  }
+  .filetree .dir { color: var(--accent); font-weight: 600; }
+  .filetree .file { color: var(--text); }
+  .filetree .note { color: var(--muted); font-style: italic; font-size: .78rem; margin-left: .5rem; }
+
+  /* ── CODE BLOCK ── */
+  .codeblock {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin: 1rem 0;
+  }
+  .codeblock-header {
+    background: var(--surface2); padding: .5rem 1rem;
+    font-size: .75rem; color: var(--muted); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .codeblock-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+  .codeblock pre {
+    padding: 1.2rem 1.5rem; overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .82rem; line-height: 1.7;
+    color: var(--text);
+  }
+  .kw { color: #c792ea; } .fn { color: #82aaff; } .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; } .num { color: #f78c6c; }
+  .cls { color: #ffcb6b; } .op { color: #89ddff; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: wrap; justify-content: center; margin: 1.5rem 0;
+  }
+  .flow-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: .8rem 1.1rem; text-align: center;
+    min-width: 110px; font-size: .82rem;
+  }
+  .flow-box .label { color: var(--muted); font-size: .7rem; margin-bottom: .2rem; }
+  .flow-box .name { font-weight: 600; font-size: .9rem; }
+  .flow-arrow { color: var(--accent); font-size: 1.4rem; padding: 0 .5rem; flex-shrink: 0; }
+  .flow-box.accent { border-color: var(--accent); background: #7c6af710; }
+  .flow-box.green { border-color: #22c55e; background: #22c55e10; }
+  .flow-box.orange { border-color: #f97316; background: #f9731610; }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: .8rem; }
+  .step { display: flex; gap: 1rem; align-items: flex-start; }
+  .step-num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: .8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body h3 { margin-bottom: .2rem; font-size: .95rem; }
+  .step-body p { font-size: .85rem; margin: 0; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; margin: 1rem 0; }
+  th { background: var(--surface2); color: var(--muted); text-align: left;
+       padding: .6rem 1rem; font-weight: 600; font-size: .78rem;
+       text-transform: uppercase; letter-spacing: .06em; }
+  td { padding: .65rem 1rem; border-top: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:hover td { background: var(--surface); }
+  td code { background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: .1rem .4rem; font-size: .78rem;
+            font-family: 'Cascadia Code', monospace; color: var(--accent2); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    border-radius: 0 10px 10px 0; padding: 1rem 1.2rem; margin: 1rem 0;
+  }
+  .callout.green { border-color: #22c55e; }
+  .callout.orange { border-color: var(--accent3); }
+  .callout strong { color: var(--text); }
+
+  /* ── METRIC CARDS ── */
+  .metrics { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.4rem; flex: 1; min-width: 120px;
+  }
+  .metric .val { font-size: 1.8rem; font-weight: 700; color: var(--accent2); }
+  .metric .lbl { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 3rem 2rem; color: var(--muted);
+    font-size: .82rem; border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    section { padding: 80px 1.2rem 3rem; }
+    .flow { gap: .4rem; }
+    .flow-arrow { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#hero">Home</a>
+  <a href="#overview">Overview</a>
+  <a href="#structure">Structure</a>
+  <a href="#detectors">Detectors</a>
+  <a href="#ensemble">Ensemble</a>
+  <a href="#semisup">Semi-Supervised</a>
+  <a href="#usage">Usage</a>
+  <a href="#config">Config</a>
+  <a href="#extend">Extend</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════ HERO -->
+<section id="hero">
+  <div class="hero-badge">Python · scikit-learn · ODSC West 2023</div>
+  <h1>AnomalyDetection</h1>
+  <p class="hero-sub">
+    A modular anomaly detection framework that benchmarks classical detectors and implements
+    a semi-supervised ensemble stacking system inspired by Chuying Ma's ODSC talk.
+  </p>
+  <div class="pill-row">
+    <span class="pill">IsolationForest</span>
+    <span class="pill">LOF</span>
+    <span class="pill">Z-Score</span>
+    <span class="pill">IQR</span>
+    <span class="pill">Autoencoder</span>
+    <span class="pill">Gaussian / GMM</span>
+    <span class="pill">Ensemble Stacking</span>
+    <span class="pill">Semi-Supervised Loop</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ OVERVIEW -->
+<section id="overview">
+  <h2><span class="num">01</span> What This Codebase Does</h2>
+
+  <div class="metrics">
+    <div class="metric"><div class="val">8</div><div class="lbl">Detector types</div></div>
+    <div class="metric"><div class="val">3</div><div class="lbl">Detector families</div></div>
+    <div class="metric"><div class="val">12</div><div class="lbl">Test cases</div></div>
+    <div class="metric"><div class="val">5%</div><div class="lbl">Default contamination</div></div>
+  </div>
+
+  <p>
+    The project trains multiple anomaly detection algorithms on the same dataset, evaluates them
+    side-by-side (precision, recall, F1, ROC-AUC), and produces plots saved to <code>reports/</code>.
+    Its centrepiece is an <strong>ensemble stacking</strong> system that combines score outputs from
+    a deep-learning, a statistical, and a tree-based detector — optionally guided by sparse labels
+    via a semi-supervised loop.
+  </p>
+
+  <div class="flow">
+    <div class="flow-box"><div class="label">Input</div><div class="name">Raw Data</div></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box"><div class="label">Preprocessing</div><div class="name">StandardScaler</div></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box accent"><div class="label">Detectors (×N)</div><div class="name">Fit + Score</div></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box green"><div class="label">Evaluation</div><div class="name">Metrics + Plots</div></div>
+  </div>
+
+  <div class="callout">
+    <strong>Design convention:</strong> every detector returns <code>1</code> for anomaly and
+    <code>0</code> for normal. <code>score_samples()</code> always returns a score where
+    <strong>higher = more anomalous</strong>, even when the underlying library uses the opposite sign.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ STRUCTURE -->
+<section id="structure">
+  <h2><span class="num">02</span> Project Structure</h2>
+
+  <div class="filetree">
+    <div><span class="dir">AnomalyDetection/</span></div>
+    <div>&nbsp;&nbsp;<span class="file">main.py</span><span class="note">— entry point; runs all detectors + semi-supervised ensemble</span></div>
+    <div>&nbsp;&nbsp;<span class="file">config.yaml</span><span class="note">— all hyperparameters in one place</span></div>
+    <div>&nbsp;&nbsp;<span class="file">requirements.txt</span></div>
+    <div>&nbsp;&nbsp;<span class="dir">src/</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">detectors/</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">base.py</span><span class="note">— BaseDetector ABC (fit, predict, score_samples, save/load)</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">isolation_forest.py</span><span class="note">— IsolationForestDetector</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">lof.py</span><span class="note">— LOFDetector</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">statistical.py</span><span class="note">— ZScoreDetector, IQRDetector</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">autoencoder.py</span><span class="note">— AutoencoderDetector (MLP reconstruction error)</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">gaussian.py</span><span class="note">— GaussianDetector (GMM log-likelihood)</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">ensemble_stacking.py</span><span class="note">— EnsembleStackingDetector (score fusion)</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">utils/</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">data_loader.py</span><span class="note">— load_csv, generate_synthetic, preprocess</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">evaluation.py</span><span class="note">— evaluate, compare_detectors</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">semi_supervised.py</span><span class="note">— make_sparse_labels, SemiSupervisedAugmenter</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">visualization/</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">plots.py</span><span class="note">— anomaly scores, confusion matrix, feature distributions, ROC curves</span></div>
+    <div>&nbsp;&nbsp;<span class="dir">tests/</span></div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">test_detectors.py</span><span class="note">— 12 pytest tests covering all detector types</span></div>
+    <div>&nbsp;&nbsp;<span class="dir">reports/</span><span class="note">— plots are auto-saved here (created at runtime)</span></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ DETECTORS -->
+<section id="detectors">
+  <h2><span class="num">03</span> The Detectors</h2>
+  <p>All detectors extend <strong>BaseDetector</strong> and share an identical interface.</p>
+
+  <div class="grid grid-2" style="margin-bottom:1.5rem">
+
+    <div class="card">
+      <div class="tag tag-tree">Tree-based</div>
+      <h3>IsolationForestDetector</h3>
+      <p>Isolates anomalies by randomly partitioning features. Points that require fewer splits to isolate get higher anomaly scores. Wraps sklearn's <code>IsolationForest</code>; sklearn's −1/+1 output is converted to 1/0.</p>
+    </div>
+
+    <div class="card">
+      <div class="tag tag-stat">Density</div>
+      <h3>LOFDetector</h3>
+      <p>Local Outlier Factor compares the local density of a point to its neighbours. Uses <code>novelty=True</code> so it can score new data after training. Score = negative LOF score (flipped sign).</p>
+    </div>
+
+    <div class="card">
+      <div class="tag tag-stat">Statistical</div>
+      <h3>ZScoreDetector</h3>
+      <p>Flags any sample whose <em>maximum feature-wise z-score</em> exceeds a threshold (default 3.0). Learns per-feature mean and std at fit time. Zero-std features are protected from division by zero.</p>
+    </div>
+
+    <div class="card">
+      <div class="tag tag-stat">Statistical</div>
+      <h3>IQRDetector</h3>
+      <p>Flags samples outside <code>[Q1 − k·IQR, Q3 + k·IQR]</code> on any feature (default k = 1.5). Score is the normalised IQR-distance from the nearest fence, so it works with <code>score_samples()</code> too.</p>
+    </div>
+
+    <div class="card">
+      <div class="tag tag-dl">Deep Learning</div>
+      <h3>AutoencoderDetector</h3>
+      <p>MLP with a bottleneck hidden layer (sklearn <code>MLPRegressor</code>) trained to reconstruct its own input. Anomaly score = mean squared reconstruction error. Points the model cannot reconstruct well are anomalies.</p>
+    </div>
+
+    <div class="card">
+      <div class="tag tag-stat">Probabilistic</div>
+      <h3>GaussianDetector</h3>
+      <p>Fits a Gaussian Mixture Model (default: 1 component = single Gaussian). Anomaly score = <em>negative</em> log-likelihood, so low-probability regions score high. Uses sklearn's <code>GaussianMixture</code>.</p>
+    </div>
+
+  </div>
+
+  <h3 style="margin-bottom:.8rem">BaseDetector interface</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>src/detectors/base.py</div>
+    <pre><span class="kw">class</span> <span class="cls">BaseDetector</span>(<span class="cls">ABC</span>):
+    <span class="fn">fit</span>(X)           <span class="cm"># train the model; returns self</span>
+    <span class="fn">predict</span>(X)       <span class="cm"># returns np.ndarray of 0/1  (1 = anomaly)</span>
+    <span class="fn">score_samples</span>(X) <span class="cm"># returns float scores — higher means more anomalous</span>
+    <span class="fn">fit_predict</span>(X)   <span class="cm"># convenience: fit then predict on the same data</span>
+    <span class="fn">save</span>(path)        <span class="cm"># persist with joblib</span>
+    <span class="fn">load</span>(path)        <span class="cm"># classmethod — restore from disk</span></pre>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Detector</th><th>score_samples?</th><th>Key hyperparams (config.yaml)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>IsolationForest</td><td>✅</td><td><code>n_estimators</code>, <code>contamination</code></td></tr>
+      <tr><td>LOF</td><td>✅</td><td><code>n_neighbors</code>, <code>contamination</code></td></tr>
+      <tr><td>ZScore</td><td>✅</td><td><code>threshold</code></td></tr>
+      <tr><td>IQR</td><td>✅</td><td><code>multiplier</code></td></tr>
+      <tr><td>Autoencoder</td><td>✅</td><td><code>encoding_dim</code>, <code>epochs</code>, <code>threshold_percentile</code></td></tr>
+      <tr><td>Gaussian</td><td>✅</td><td><code>n_components</code>, <code>covariance_type</code>, <code>threshold_percentile</code></td></tr>
+      <tr><td>EnsembleStacking</td><td>✅</td><td><code>threshold_percentile</code> (base detector params inherited)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ ENSEMBLE -->
+<section id="ensemble">
+  <h2><span class="num">04</span> Ensemble Stacking</h2>
+  <p>
+    Inspired by Chuying Ma's ODSC West 2023 talk, <strong>EnsembleStackingDetector</strong>
+    combines scores from heterogeneous detectors to produce a single unified anomaly score
+    that is more robust than any individual detector alone.
+  </p>
+
+  <div class="flow" style="flex-direction:column; align-items:flex-start; gap:.6rem; margin: 1.5rem 0;">
+    <div style="display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;">
+      <div class="flow-box" style="min-width:130px"><div class="label">Deep Learning</div><div class="name">Autoencoder score</div></div>
+      <div class="flow-box" style="min-width:130px"><div class="label">Statistical</div><div class="name">Gaussian score</div></div>
+      <div class="flow-box" style="min-width:130px"><div class="label">Tree-based</div><div class="name">IsoForest score</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box accent" style="min-width:160px"><div class="label">MinMax normalize each</div><div class="name">Score matrix [N × 3]</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box green" style="min-width:160px"><div class="label">Meta-learner or mean</div><div class="name">Unified score [N]</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box orange" style="min-width:130px"><div class="label">Percentile threshold</div><div class="name">0 / 1 prediction</div></div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="tag tag-ens">Unsupervised mode</div>
+      <h3>No labels provided</h3>
+      <p>
+        Each detector's scores are min-max normalized to [0,1], then averaged.
+        The threshold for flagging anomalies is set at the
+        <code>threshold_percentile</code> of the training unified scores.
+      </p>
+    </div>
+    <div class="card">
+      <div class="tag tag-semi">Semi-supervised mode</div>
+      <h3>Sparse labels provided (y ≠ −1)</h3>
+      <p>
+        A <code>LogisticRegression</code> meta-learner is trained on the stacked
+        score matrix using only the labeled rows. Its predicted probability of
+        anomaly becomes the unified score. Class weights are balanced to handle
+        the minority-anomaly problem.
+      </p>
+    </div>
+  </div>
+
+  <div class="codeblock" style="margin-top:1.2rem">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>ensemble_stacking.py — key logic</div>
+    <pre><span class="cm"># Build the ensemble</span>
+ensemble = <span class="cls">EnsembleStackingDetector</span>(
+    detectors=[<span class="cls">AutoencoderDetector</span>(), <span class="cls">GaussianDetector</span>(), <span class="cls">IsolationForestDetector</span>()],
+    threshold_percentile=<span class="num">95</span>,
+)
+
+<span class="cm"># Unsupervised: just pass X</span>
+ensemble.<span class="fn">fit</span>(X_train)
+
+<span class="cm"># Semi-supervised: pass sparse labels (-1 = unlabeled)</span>
+ensemble.<span class="fn">fit</span>(X_train, y=y_sparse)   <span class="cm"># trains LogReg meta-learner on labeled rows</span>
+
+scores = ensemble.<span class="fn">score_samples</span>(X_test)  <span class="cm"># unified anomaly score</span>
+preds  = ensemble.<span class="fn">predict</span>(X_test)         <span class="cm"># 0 or 1</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ SEMI-SUP -->
+<section id="semisup">
+  <h2><span class="num">05</span> Semi-Supervised Label Augmentation</h2>
+  <p>
+    In real-world fraud/anomaly scenarios you may have thousands of transactions but only a handful
+    of confirmed fraud labels. <strong>SemiSupervisedAugmenter</strong> iteratively grows the label set
+    using the ensemble's own predictions as pseudo-labels.
+  </p>
+
+  <div class="steps" style="margin: 1.5rem 0;">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Start with sparse labels</h3>
+        <p><code>make_sparse_labels(y_true, label_fraction=0.1)</code> keeps 10 % of each class labeled; the rest become <code>−1</code> (unlabeled).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Fit ensemble on labeled subset</h3>
+        <p>The ensemble is fit using only rows where <code>y ≠ −1</code>. When both classes are present, the logistic meta-learner is trained.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Score all unlabeled points</h3>
+        <p>The fitted ensemble assigns a unified anomaly score to every unlabeled sample.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Assign pseudo-labels</h3>
+        <p>Scores above the <code>anomaly_percentile</code> → label <code>1</code>. Scores below <code>normal_percentile</code> → label <code>0</code>. Ambiguous points stay <code>−1</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Repeat up to max_iters</h3>
+        <p>Each iteration the labeled set grows, improving the meta-learner's signal. The loop stops early if no new labels are assigned.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>semi_supervised.py</div>
+    <pre><span class="kw">from</span> src.utils.semi_supervised <span class="kw">import</span> make_sparse_labels, SemiSupervisedAugmenter
+
+<span class="cm"># Simulate scarce labeling (only 10% of each class labeled)</span>
+y_sparse = <span class="fn">make_sparse_labels</span>(y_train, label_fraction=<span class="num">0.1</span>)
+<span class="cm"># y_sparse: array of  -1 (unlabeled) | 0 (normal) | 1 (anomaly)</span>
+
+augmenter = <span class="cls">SemiSupervisedAugmenter</span>(
+    detector=ensemble,
+    anomaly_percentile=<span class="num">90</span>,   <span class="cm"># top 10% of unlabeled scores → anomaly</span>
+    normal_percentile=<span class="num">20</span>,    <span class="cm"># bottom 20% of unlabeled scores → normal</span>
+    max_iters=<span class="num">3</span>,
+)
+y_augmented = augmenter.<span class="fn">fit_augment</span>(X_train_arr, y_sparse)
+<span class="cm"># y_augmented: same shape, more 0s and 1s, fewer -1s</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ USAGE -->
+<section id="usage">
+  <h2><span class="num">06</span> How to Use It</h2>
+
+  <h3 style="margin-bottom:.6rem; margin-top:.5rem">Install dependencies</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>terminal</div>
+    <pre>pip install -r requirements.txt</pre>
+  </div>
+
+  <h3 style="margin-bottom:.6rem; margin-top:1.2rem">Run the full benchmark</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>terminal</div>
+    <pre>python main.py</pre>
+  </div>
+  <p style="margin-top:.5rem">This will: generate 2 000 synthetic samples (5 % anomalies), train all detectors, print a comparison table, save plots to <code>reports/</code>, then run the semi-supervised ensemble section.</p>
+
+  <h3 style="margin-bottom:.6rem; margin-top:1.2rem">Run tests</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>terminal</div>
+    <pre>pytest tests/test_detectors.py -v</pre>
+  </div>
+
+  <h3 style="margin-bottom:.6rem; margin-top:1.2rem">Use a single detector in your own code</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>Python</div>
+    <pre><span class="kw">from</span> src.detectors <span class="kw">import</span> IsolationForestDetector
+<span class="kw">from</span> src.utils.data_loader <span class="kw">import</span> load_csv, preprocess
+
+X, y = <span class="fn">load_csv</span>(<span class="str">"data/raw/my_data.csv"</span>, target_col=<span class="str">"label"</span>)
+X_train_s, X_test_s, scaler = <span class="fn">preprocess</span>(X_train, X_test)
+
+det = <span class="cls">IsolationForestDetector</span>(n_estimators=<span class="num">200</span>, contamination=<span class="num">0.03</span>)
+det.<span class="fn">fit</span>(X_train_s)
+preds = det.<span class="fn">predict</span>(X_test_s)   <span class="cm"># 1 = anomaly, 0 = normal</span>
+scores = det.<span class="fn">score_samples</span>(X_test_s)
+
+det.<span class="fn">save</span>(<span class="str">"models/iforest.pkl"</span>)   <span class="cm"># persist for later</span></pre>
+  </div>
+
+  <h3 style="margin-bottom:.6rem; margin-top:1.2rem">Load your own CSV data</h3>
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>Python</div>
+    <pre><span class="kw">from</span> src.utils.data_loader <span class="kw">import</span> load_csv, preprocess
+
+X, y = <span class="fn">load_csv</span>(<span class="str">"data/raw/transactions.csv"</span>, target_col=<span class="str">"is_fraud"</span>)
+<span class="cm"># y is None if target_col is absent — unsupervised mode</span>
+
+X_train_s, X_test_s, _ = <span class="fn">preprocess</span>(X_train, X_test)</pre>
+  </div>
+
+  <h3 style="margin-bottom:.6rem; margin-top:1.2rem">Plots produced</h3>
+  <table>
+    <thead><tr><th>File</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td><code>reports/{name}_cm.png</code></td><td>Confusion matrix heatmap per detector</td></tr>
+      <tr><td><code>reports/{name}_scores.png</code></td><td>Anomaly score time-series with true anomalies highlighted in red</td></tr>
+      <tr><td><code>reports/roc_curves.png</code></td><td>Overlaid ROC curves for all detectors that support <code>score_samples()</code></td></tr>
+      <tr><td><code>reports/EnsembleStacking_cm.png</code></td><td>Ensemble stacking confusion matrix</td></tr>
+      <tr><td><code>reports/EnsembleStacking_scores.png</code></td><td>Unified ensemble anomaly scores</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ CONFIG -->
+<section id="config">
+  <h2><span class="num">07</span> config.yaml Reference</h2>
+  <p>All hyperparameters live in <code>config.yaml</code> — no hard-coded values in the source files.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>config.yaml</div>
+    <pre><span class="str">data:</span>
+  raw_path: data/raw          <span class="cm"># where to look for CSV files</span>
+  processed_path: data/processed
+  test_size: <span class="num">0.2</span>             <span class="cm"># 80/20 train-test split</span>
+  random_state: <span class="num">42</span>
+
+<span class="str">detectors:</span>
+  isolation_forest:
+    n_estimators: <span class="num">100</span>         <span class="cm"># number of trees</span>
+    contamination: <span class="num">0.05</span>       <span class="cm"># expected fraction of anomalies</span>
+    random_state: <span class="num">42</span>
+  lof:
+    n_neighbors: <span class="num">20</span>
+    contamination: <span class="num">0.05</span>
+  zscore:
+    threshold: <span class="num">3.0</span>            <span class="cm"># σ beyond which a point is flagged</span>
+  iqr:
+    multiplier: <span class="num">1.5</span>           <span class="cm"># k in [Q1 − k·IQR, Q3 + k·IQR]</span>
+  autoencoder:
+    encoding_dim: <span class="num">16</span>          <span class="cm"># bottleneck layer size</span>
+    epochs: <span class="num">50</span>
+    batch_size: <span class="num">32</span>
+    threshold_percentile: <span class="num">95</span>  <span class="cm"># percentile of train scores used as anomaly cutoff</span>
+  gaussian:
+    n_components: <span class="num">1</span>           <span class="cm"># number of Gaussians in GMM</span>
+    covariance_type: full
+    threshold_percentile: <span class="num">95</span>
+  ensemble_stacking:
+    threshold_percentile: <span class="num">95</span>
+
+<span class="str">semi_supervised:</span>
+  label_fraction: <span class="num">0.1</span>        <span class="cm"># fraction of each class initially labeled</span>
+  anomaly_percentile: <span class="num">90</span>     <span class="cm"># unlabeled scores above this → pseudo-anomaly</span>
+  normal_percentile: <span class="num">20</span>      <span class="cm"># unlabeled scores below this → pseudo-normal</span>
+  max_iters: <span class="num">3</span>               <span class="cm"># max pseudo-labeling rounds</span>
+
+<span class="str">evaluation:</span>
+  metrics: [precision, recall, f1, roc_auc]
+  plots: true
+
+<span class="str">models:</span>
+  save_path: models/</pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ EXTEND -->
+<section id="extend">
+  <h2><span class="num">08</span> Adding a New Detector</h2>
+  <p>The plugin system is three steps.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Create <code>src/detectors/my_detector.py</code></h3>
+        <div class="codeblock">
+          <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>my_detector.py</div>
+          <pre><span class="kw">from</span> .base <span class="kw">import</span> BaseDetector
+
+<span class="kw">class</span> <span class="cls">MyDetector</span>(<span class="cls">BaseDetector</span>):
+    <span class="kw">def</span> <span class="fn">fit</span>(<span class="op">self</span>, X, y=<span class="kw">None</span>):
+        arr = <span class="op">self</span>.<span class="fn">_to_array</span>(X)
+        <span class="cm"># ... train your model ...</span>
+        <span class="op">self</span>.is_fitted = <span class="kw">True</span>
+        <span class="kw">return self</span>
+
+    <span class="kw">def</span> <span class="fn">predict</span>(<span class="op">self</span>, X):
+        <span class="kw">return</span> (<span class="op">self</span>.<span class="fn">score_samples</span>(X) > <span class="op">self</span>._threshold).<span class="fn">astype</span>(<span class="num">int</span>)
+
+    <span class="kw">def</span> <span class="fn">score_samples</span>(<span class="op">self</span>, X):
+        <span class="cm"># return higher score for more anomalous points</span>
+        ...</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Export it from <code>src/detectors/__init__.py</code></h3>
+        <div class="codeblock">
+          <div class="codeblock-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>__init__.py</div>
+          <pre><span class="kw">from</span> .my_detector <span class="kw">import</span> MyDetector
+__all__ = [..., <span class="str">"MyDetector"</span>]</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Add its hyperparameters to <code>config.yaml</code> and wire it into <code>main.py</code></h3>
+        <p>Drop it into the <code>detectors</code> dict in <code>main()</code> and it will automatically be benchmarked, evaluated, and plotted alongside the existing detectors.</p>
+        <p>To include it in the ensemble, pass it to <code>EnsembleStackingDetector(detectors=[...])</code>. The only requirement is that it implements <code>score_samples()</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout green" style="margin-top:1.5rem">
+    <strong>Tip — training on normal data only:</strong> For the Autoencoder and Gaussian detectors,
+    if you have confirmed normal samples you can pass <code>X_normal</code> to <code>fit()</code>
+    rather than the full mixed dataset. The reconstruction error / log-likelihood will be sharper
+    at flagging deviations.
+  </div>
+
+  <div class="callout orange" style="margin-top:.8rem">
+    <strong>Tip — real-time scoring:</strong> Call <code>detector.save("models/my.pkl")</code> after
+    training, then <code>BaseDetector.load("models/my.pkl")</code> in a serving process.
+    <code>score_samples()</code> works on single rows — just pass a shape
+    <code>[1, n_features]</code> array.
+  </div>
+</section>
+
+<footer>
+  AnomalyDetection · Python 3.12+ · scikit-learn · Inspired by Chuying Ma, ODSC West 2023
+</footer>
+
+</body>
+</html>

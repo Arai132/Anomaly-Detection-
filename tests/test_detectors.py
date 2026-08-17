@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from src.utils.data_loader import generate_synthetic, preprocess
 from src.detectors import IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector
-from src.detectors import AutoencoderDetector, GaussianDetector, EnsembleStackingDetector
+from src.detectors import AutoencoderDetector, VAEDetector, GaussianDetector, EnsembleStackingDetector
 from src.utils.semi_supervised import make_sparse_labels, SemiSupervisedAugmenter
 
 
@@ -61,6 +61,48 @@ def test_autoencoder_score_samples(data):
     scores = det.score_samples(X)
     assert scores.shape == (len(X),)
     assert scores.min() >= 0
+
+
+def test_autoencoder_save_load_roundtrip(data, tmp_path):
+    X, y = data
+    det = AutoencoderDetector(encoding_dim=4, epochs=5, device="cpu")
+    det.fit(X)
+    preds_before = det.predict(X)
+
+    path = tmp_path / "ae.joblib"
+    det.save(path)
+    loaded = AutoencoderDetector.load(path)
+    preds_after = loaded.predict(X)
+
+    np.testing.assert_array_equal(preds_before, preds_after)
+
+
+def test_vae(data):
+    X, y = data
+    _check_detector(VAEDetector(latent_dim=4, epochs=10), X, y)
+
+
+def test_vae_score_samples(data):
+    X, y = data
+    det = VAEDetector(latent_dim=4, epochs=10)
+    det.fit(X)
+    scores = det.score_samples(X)
+    assert scores.shape == (len(X),)
+    assert scores.min() >= 0
+
+
+def test_vae_save_load_roundtrip(data, tmp_path):
+    X, y = data
+    det = VAEDetector(latent_dim=4, epochs=5, device="cpu")
+    det.fit(X)
+    preds_before = det.predict(X)
+
+    path = tmp_path / "vae.joblib"
+    det.save(path)
+    loaded = VAEDetector.load(path)
+    preds_after = loaded.predict(X)
+
+    np.testing.assert_array_equal(preds_before, preds_after)
 
 
 def test_gaussian(data):

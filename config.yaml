@@ -18,9 +18,21 @@ detectors:
     multiplier: 1.5
   autoencoder:
     encoding_dim: 16
+    hidden_dim: null
     epochs: 50
     batch_size: 32
+    lr: 0.001
     threshold_percentile: 95
+    device: auto
+  vae:
+    latent_dim: 16
+    hidden_dim: null
+    epochs: 50
+    batch_size: 32
+    lr: 0.001
+    beta: 1.0
+    threshold_percentile: 95
+    device: auto
   gaussian:
     n_components: 1
     covariance_type: full

@@ -203,6 +203,28 @@ DETECTORS: list[DetectorSpec] = [
         params={"encoding_dim": 16, "epochs": 50, "threshold_percentile": 95},
     ),
     DetectorSpec(
+        id="vae",
+        name="Variational Autoencoder (VAE)",
+        short="Probabilistic reconstruction error — regularized latent space",
+        description=(
+            "Like an autoencoder, but the bottleneck is a learned distribution "
+            "(mean + variance) instead of a fixed vector, regularized toward a "
+            "standard normal prior via KL divergence. The smoother latent space "
+            "often generalizes better than a plain autoencoder on complex data."
+        ),
+        strengths=["Regularized latent space generalizes well", "Captures non-linear correlations", "Handles high-dimensional data"],
+        weaknesses=["More hyperparameters to tune (beta, latent_dim)", "Needs sufficient training data", "Less interpretable"],
+        scores={
+            "structure":      {"univariate": 0, "multivariate": 3, "time_series": 1},
+            "distribution":   {"gaussian": 3, "skewed": 2, "heavy_tailed": 2, "multimodal": 2, "uniform": 1, "categorical": -1, "sparse": 1, "unknown": 2},
+            "pattern":        {"stationary": 2, "trending": 1, "seasonal": 1, "random_walk": 0, "bursty": 1, "correlated": 3, "none": 1},
+            "dimensionality": {"low": 0, "medium": 2, "high": 3},
+            "anomaly_type":   {"point": 2, "contextual": 2, "collective": 2, "novelty": 2},
+            "labels":         {"none": 2, "few": 1},
+        },
+        params={"latent_dim": 16, "epochs": 50, "beta": 1.0, "threshold_percentile": 95},
+    ),
+    DetectorSpec(
         id="gaussian",
         name="Gaussian Mixture Model (GMM)",
         short="Probabilistic model — anomalies have low likelihood",

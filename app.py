@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore")
 from src.recommender import NATURE_TAXONOMY, DETECTOR_MAP, recommend, auto_detect_natures
 from src.detectors import (
     IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector,
-    AutoencoderDetector, GaussianDetector, EnsembleStackingDetector,
+    AutoencoderDetector, VAEDetector, GaussianDetector, EnsembleStackingDetector,
     EllipticEnvelopeDetector, OneClassSVMDetector, PCADetector,
     RollingZScoreDetector, STLDetector,
 )
@@ -117,6 +117,11 @@ def build_detector(det_id: str, params: dict, contamination: float):
         "autoencoder":      lambda: AutoencoderDetector(
                                 encoding_dim=int(p.get("encoding_dim", 16)),
                                 epochs=int(p.get("epochs", 50)),
+                                threshold_percentile=p.get("threshold_percentile", 95)),
+        "vae":              lambda: VAEDetector(
+                                latent_dim=int(p.get("latent_dim", 16)),
+                                epochs=int(p.get("epochs", 50)),
+                                beta=p.get("beta", 1.0),
                                 threshold_percentile=p.get("threshold_percentile", 95)),
         "gaussian":         lambda: GaussianDetector(
                                 n_components=int(p.get("n_components", 1)),

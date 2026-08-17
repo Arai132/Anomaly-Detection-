@@ -2,6 +2,7 @@ from .isolation_forest import IsolationForestDetector
 from .lof import LOFDetector
 from .statistical import ZScoreDetector, IQRDetector
 from .autoencoder import AutoencoderDetector
+from .vae import VAEDetector
 from .gaussian import GaussianDetector
 from .ensemble_stacking import EnsembleStackingDetector
 from .elliptic_envelope import EllipticEnvelopeDetector
@@ -17,6 +18,7 @@ __all__ = [
     "ZScoreDetector",
     "IQRDetector",
     "AutoencoderDetector",
+    "VAEDetector",
     "GaussianDetector",
     "EnsembleStackingDetector",
     "EllipticEnvelopeDetector",

@@ -2,8 +2,6 @@
 
 A modular Python framework for detecting anomalies in tabular and time series data. Includes 12 detector implementations, a smart recommendation engine, and an interactive Streamlit UI.
 
-Inspired by Chuying Ma's semi-supervised ensemble stacking approach (ODSC West 2023).
-
 ## Features
 
 - **12 detectors** spanning statistical, density-based, deep learning, and ensemble methods

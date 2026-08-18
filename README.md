@@ -1,12 +1,15 @@
 # Anomaly Detection Framework
 
-A modular Python framework for detecting anomalies in tabular and time series data. Includes 12 detector implementations, a smart recommendation engine, and an interactive Streamlit UI.
+A modular Python framework for detecting anomalies in tabular and time series data. Includes 14 detector implementations, a smart recommendation engine, an interactive Streamlit UI, and a FastAPI prediction endpoint.
 
 ## Features
 
-- **12 detectors** spanning statistical, density-based, deep learning, and ensemble methods
+- **14 detectors** spanning statistical, tree-based, density-based, deep learning, and ensemble methods
+- **PyTorch deep learning detectors** — autoencoder and variational autoencoder, both GPU-capable
 - **Smart recommender** — describe your data's nature and get ranked method suggestions
 - **Streamlit UI** — upload data, get recommendations, tune parameters, and visualise results interactively
+- **FastAPI prediction endpoint** — serve a trained ensemble programmatically; containerized with Docker
+- **Real-data benchmark** — ensemble stacking evaluated against every base detector on a real fraud-detection dataset (see `benchmark_fraud.py`)
 - **Semi-supervised mode** — works with as few as 10% labeled anomalies via iterative pseudo-label augmentation
 - **Config-driven** — all hyperparameters in `config.yaml`, no magic numbers in source
 
@@ -18,10 +21,12 @@ A modular Python framework for detecting anomalies in tabular and time series da
 | IQR | Skewed or unknown distributions |
 | Isolation Forest | High-dimensional tabular data, mixed distributions |
 | Local Outlier Factor (LOF) | Clustered / multimodal data |
-| Autoencoder | High-dimensional correlated features |
+| Autoencoder (PyTorch) | High-dimensional correlated features |
+| Variational Autoencoder (PyTorch) | High-dimensional correlated features, regularized latent space |
 | Gaussian Mixture Model | Probabilistic scoring, multimodal clusters |
 | Elliptic Envelope | Gaussian multivariate with correlated features |
 | One-Class SVM | Novelty detection on clean training data |
+| SGD One-Class SVM | Novelty detection at large scale (linear-time Nystroem + SGD approximation) |
 | PCA Reconstruction | Correlated high-dimensional data |
 | Rolling Z-Score | Stationary or slowly drifting time series |
 | STL Decomposition | Time series with trend and/or seasonality |
@@ -45,6 +50,24 @@ python main.py
 ```
 Trains all detectors on synthetic data and prints a comparison table. Plots saved to `reports/`.
 
+**Run the real-data fraud benchmark:**
+```bash
+python benchmark_fraud.py
+```
+Fetches the ULB Credit Card Fraud Detection dataset (via OpenML, no auth needed), fits all 10 tabular-compatible detectors plus the unsupervised ensemble, prints a precision/recall/F1/ROC-AUC comparison table (`reports/fraud_benchmark_results.csv`), and saves the trained ensemble to `models/fraud_pipeline.joblib` for serving.
+
+**Run the prediction API:**
+```bash
+uvicorn api:app --reload
+```
+`POST /predict` with `{"records": [{...feature: value...}]}` against a trained `models/fraud_pipeline.joblib` (run `benchmark_fraud.py` first). `GET /health` for a liveness check.
+
+**Run everything in Docker:**
+```bash
+docker compose up --build
+```
+Starts the Streamlit UI on `:8501` and the FastAPI endpoint on `:8000`, both reading the trained model from `./models`.
+
 **Run tests:**
 ```bash
 pytest tests/test_detectors.py -v
@@ -54,8 +77,12 @@ pytest tests/test_detectors.py -v
 
 ```
 ├── app.py                  # Streamlit interactive UI
-├── main.py                 # Batch benchmark runner
+├── api.py                  # FastAPI prediction endpoint
+├── main.py                 # Batch benchmark runner (synthetic data)
+├── benchmark_fraud.py      # Real-data benchmark (fraud dataset) + model persistence
 ├── config.yaml             # All hyperparameters
+├── Dockerfile              # Shared image for both services
+├── docker-compose.yml      # streamlit + api services
 ├── src/
 │   ├── detectors/          # All detector implementations
 │   │   ├── base.py         # BaseDetector ABC
@@ -63,15 +90,17 @@ pytest tests/test_detectors.py -v
 │   │   ├── isolation_forest.py
 │   │   ├── lof.py
 │   │   ├── autoencoder.py
+│   │   ├── vae.py
 │   │   ├── gaussian.py
 │   │   ├── elliptic_envelope.py
 │   │   ├── one_class_svm.py
+│   │   ├── sgd_one_class_svm.py
 │   │   ├── pca_detector.py
 │   │   ├── timeseries.py   # RollingZScore, STL
 │   │   └── ensemble_stacking.py
 │   ├── recommender.py      # Nature taxonomy + scoring engine
 │   └── utils/
-│       ├── data_loader.py  # CSV/JSON loading, synthetic data generation
+│       ├── data_loader.py  # CSV/JSON loading, synthetic + real fraud data
 │       ├── evaluation.py   # Metrics (precision, recall, F1, ROC-AUC)
 │       └── semi_supervised.py  # Pseudo-label augmentation loop
 └── tests/
@@ -141,5 +170,7 @@ preds = ensemble.predict(X_test)
 
 - Python 3.12+
 - scikit-learn, numpy, pandas, scipy, statsmodels
+- torch (autoencoder/VAE, GPU-capable via `device: auto`)
 - streamlit, plotly
+- fastapi, uvicorn (prediction endpoint)
 - See `requirements.txt` for full list

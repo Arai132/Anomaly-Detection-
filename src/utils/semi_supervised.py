@@ -61,11 +61,18 @@ class SemiSupervisedAugmenter:
 
             self.detector.fit(X[labeled_mask], y[labeled_mask].astype(int))
 
-            unlabeled_idx = np.where(unlabeled_mask)[0]
-            scores = self.detector.score_samples(X[unlabeled_idx])
+            # Percentiles are computed against the full dataset's score
+            # distribution, not just the shrinking unlabeled pool — otherwise
+            # "top 10%" keeps meaning "10% of whatever's left" each round,
+            # which over-promotes far past the true anomaly rate as easy
+            # cases get resolved and the remaining pool becomes enriched with
+            # harder, more ambiguous points (a self-training echo-chamber).
+            full_scores = self.detector.score_samples(X)
+            hi = np.percentile(full_scores, self.anomaly_percentile)
+            lo = np.percentile(full_scores, self.normal_percentile)
 
-            hi = np.percentile(scores, self.anomaly_percentile)
-            lo = np.percentile(scores, self.normal_percentile)
+            unlabeled_idx = np.where(unlabeled_mask)[0]
+            scores = full_scores[unlabeled_idx]
 
             new_anom = unlabeled_idx[scores >= hi]
             new_norm = unlabeled_idx[scores <= lo]

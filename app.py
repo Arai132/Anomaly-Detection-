@@ -16,7 +16,7 @@ from src.recommender import NATURE_TAXONOMY, DETECTOR_MAP, recommend, auto_detec
 from src.detectors import (
     IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector,
     AutoencoderDetector, VAEDetector, GaussianDetector, EnsembleStackingDetector,
-    EllipticEnvelopeDetector, OneClassSVMDetector, PCADetector,
+    EllipticEnvelopeDetector, OneClassSVMDetector, SGDOneClassSVMDetector, PCADetector,
     RollingZScoreDetector, STLDetector,
 )
 
@@ -130,6 +130,10 @@ def build_detector(det_id: str, params: dict, contamination: float):
         "one_class_svm":    lambda: OneClassSVMDetector(
                                 nu=contamination,
                                 kernel=p.get("kernel", "rbf")),
+        "sgd_one_class_svm":lambda: SGDOneClassSVMDetector(
+                                nu=contamination,
+                                gamma=p.get("gamma", "scale"),
+                                n_components=int(p.get("n_components", 100))),
         "pca":              lambda: PCADetector(
                                 n_components=p.get("n_components", 0.95),
                                 threshold_percentile=p.get("threshold_percentile", 95)),
@@ -152,7 +156,12 @@ def build_detector(det_id: str, params: dict, contamination: float):
 
 def run_detector(det_id: str, params: dict, X: np.ndarray, contamination: float,
                  y_true: np.ndarray | None = None):
-    """Fit on 80% train, predict on full dataset. Returns (predictions, scores, metrics)."""
+    """
+    Fit on the first 80% of rows, predict/score every row (so anomalies are
+    flagged across the whole dataset), but compute quality metrics only on
+    the held-out last 20% to avoid inflating them with in-sample rows.
+    Returns (predictions, scores, metrics).
+    """
     detector = build_detector(det_id, params, contamination)
     n = len(X)
     split = max(10, int(n * 0.8))
@@ -173,14 +182,22 @@ def run_detector(det_id: str, params: dict, X: np.ndarray, contamination: float,
 
     metrics = {}
     if y_true is not None and len(np.unique(y_true)) > 1:
-        from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
-        metrics["precision"] = round(precision_score(y_true, preds, zero_division=0), 3)
-        metrics["recall"]    = round(recall_score(y_true, preds, zero_division=0), 3)
-        metrics["f1"]        = round(f1_score(y_true, preds, zero_division=0), 3)
-        try:
-            metrics["roc_auc"] = round(roc_auc_score(y_true, scores), 3)
-        except Exception:
-            pass
+        # Quality metrics must come from the held-out 20% only — preds/scores
+        # above cover the full dataset (including the training rows) so that
+        # anomaly flags are shown for everything uploaded, but scoring the
+        # model against rows it was trained on would inflate precision/recall.
+        y_test, test_preds, test_scores = y_true[split:], preds[split:], scores[split:]
+        if len(np.unique(y_test)) > 1:
+            from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
+            metrics["precision"] = round(precision_score(y_test, test_preds, zero_division=0), 3)
+            metrics["recall"]    = round(recall_score(y_test, test_preds, zero_division=0), 3)
+            metrics["f1"]        = round(f1_score(y_test, test_preds, zero_division=0), 3)
+            try:
+                metrics["roc_auc"] = round(roc_auc_score(y_test, test_scores), 3)
+            except Exception:
+                pass
+        else:
+            metrics["note"] = "held-out split has only one class — quality metrics unavailable"
 
     metrics["n_anomalies"] = int(preds.sum())
     metrics["anomaly_rate"] = f"{preds.mean()*100:.1f}%"

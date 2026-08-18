@@ -12,7 +12,7 @@ class ZScoreDetector(BaseDetector):
         self._mean: np.ndarray | None = None
         self._std: np.ndarray | None = None
 
-    def fit(self, X: pd.DataFrame | np.ndarray) -> "ZScoreDetector":
+    def fit(self, X: pd.DataFrame | np.ndarray, y=None) -> "ZScoreDetector":
         arr = self._to_array(X)
         self._mean = arr.mean(axis=0)
         self._std = arr.std(axis=0)
@@ -39,7 +39,7 @@ class IQRDetector(BaseDetector):
         self._q1: np.ndarray | None = None
         self._q3: np.ndarray | None = None
 
-    def fit(self, X: pd.DataFrame | np.ndarray) -> "IQRDetector":
+    def fit(self, X: pd.DataFrame | np.ndarray, y=None) -> "IQRDetector":
         arr = self._to_array(X)
         self._q1 = np.percentile(arr, 25, axis=0)
         self._q3 = np.percentile(arr, 75, axis=0)

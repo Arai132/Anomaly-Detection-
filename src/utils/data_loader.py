@@ -10,6 +10,20 @@ def load_csv(path: str | Path, target_col: str | None = None) -> tuple[pd.DataFr
     return df, y
 
 
+def load_fraud_dataset() -> tuple[pd.DataFrame, np.ndarray]:
+    """
+    Real-world benchmark: the ULB "Credit Card Fraud Detection" dataset
+    (284,807 transactions, 492 frauds, 0.173% positive rate), fetched via
+    OpenML (no Kaggle auth required; same data Kaggle hosts).
+    """
+    from sklearn.datasets import fetch_openml
+
+    data = fetch_openml(data_id=1597, as_frame=True, parser="auto")
+    X = data.data.reset_index(drop=True)
+    y = data.target.astype(int).to_numpy()
+    return X, y
+
+
 def generate_synthetic(
     n_samples: int = 1000,
     n_features: int = 5,

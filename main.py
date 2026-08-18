@@ -8,7 +8,8 @@ from src.utils.evaluation import evaluate, compare_detectors
 from src.utils.semi_supervised import make_sparse_labels, SemiSupervisedAugmenter
 from src.detectors import (
     IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector,
-    AutoencoderDetector, GaussianDetector, EnsembleStackingDetector,
+    AutoencoderDetector, VAEDetector, GaussianDetector, EnsembleStackingDetector,
+    EllipticEnvelopeDetector, OneClassSVMDetector, SGDOneClassSVMDetector, PCADetector,
 )
 from src.visualization.plots import plot_anomaly_scores, plot_confusion_matrix, plot_roc_curves
 
@@ -32,6 +33,13 @@ def main():
         "LOF": LOFDetector(**cfg["detectors"]["lof"]),
         "ZScore": ZScoreDetector(threshold=cfg["detectors"]["zscore"]["threshold"]),
         "IQR": IQRDetector(multiplier=cfg["detectors"]["iqr"]["multiplier"]),
+        "Autoencoder": AutoencoderDetector(**cfg["detectors"]["autoencoder"]),
+        "VAE": VAEDetector(**cfg["detectors"]["vae"]),
+        "Gaussian": GaussianDetector(**cfg["detectors"]["gaussian"]),
+        "EllipticEnvelope": EllipticEnvelopeDetector(**cfg["detectors"]["elliptic_envelope"]),
+        "OneClassSVM": OneClassSVMDetector(**cfg["detectors"]["one_class_svm"]),
+        "SGD-OneClassSVM": SGDOneClassSVMDetector(**cfg["detectors"]["sgd_one_class_svm"]),
+        "PCA": PCADetector(**cfg["detectors"]["pca"]),
     }
 
     results = {}

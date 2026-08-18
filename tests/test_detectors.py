@@ -3,6 +3,8 @@ import pytest
 from src.utils.data_loader import generate_synthetic, preprocess
 from src.detectors import IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector
 from src.detectors import AutoencoderDetector, VAEDetector, GaussianDetector, EnsembleStackingDetector
+from src.detectors import SGDOneClassSVMDetector
+from src.detectors import EllipticEnvelopeDetector, OneClassSVMDetector
 from src.utils.semi_supervised import make_sparse_labels, SemiSupervisedAugmenter
 
 
@@ -18,6 +20,17 @@ def _check_detector(detector, X, y):
     preds = detector.predict(X)
     assert preds.shape == (len(X),)
     assert set(preds).issubset({0, 1})
+
+
+@pytest.mark.parametrize("detector_cls", [
+    IsolationForestDetector, LOFDetector, ZScoreDetector, IQRDetector,
+    AutoencoderDetector, VAEDetector, GaussianDetector, SGDOneClassSVMDetector,
+])
+def test_fit_accepts_y_kwarg(data, detector_cls):
+    """Every detector must honor BaseDetector's documented fit(X, y=None) interface."""
+    X, y = data
+    kwargs = {"device": "cpu"} if detector_cls in (AutoencoderDetector, VAEDetector) else {}
+    detector_cls(**kwargs).fit(X, y=None)
 
 
 def test_isolation_forest(data):
@@ -116,6 +129,42 @@ def test_gaussian_score_samples(data):
     det.fit(X)
     scores = det.score_samples(X)
     assert scores.shape == (len(X),)
+
+
+def test_sgd_one_class_svm(data):
+    X, y = data
+    _check_detector(SGDOneClassSVMDetector(nu=0.1), X, y)
+
+
+def test_sgd_one_class_svm_score_samples(data):
+    X, y = data
+    det = SGDOneClassSVMDetector(nu=0.1)
+    det.fit(X)
+    scores = det.score_samples(X)
+    assert scores.shape == (len(X),)
+
+
+@pytest.mark.parametrize("detector_cls,kwarg", [
+    (IsolationForestDetector, "contamination"),
+    (LOFDetector, "contamination"),
+    (EllipticEnvelopeDetector, "contamination"),
+    (OneClassSVMDetector, "nu"),
+    (SGDOneClassSVMDetector, "nu"),
+])
+def test_extreme_contamination_does_not_degenerate(detector_cls, kwarg):
+    """
+    Regression test: at extreme contamination (real fraud rate ~0.17%), LOF and
+    SGDOneClassSVM used to flag exactly 0 anomalies because they trusted sklearn's
+    own internal contamination/nu-derived decision boundary, which collapses at
+    extreme quantiles. All contamination-driven detectors now compute their own
+    percentile threshold from score_samples() instead, so this must never happen.
+    """
+    X, y = generate_synthetic(n_samples=5000, n_features=6, contamination=0.002, random_state=7)
+    X_scaled, _, _ = preprocess(X)
+    det = detector_cls(**{kwarg: 0.002})
+    det.fit(X_scaled)
+    preds = det.predict(X_scaled)
+    assert preds.sum() > 0, f"{detector_cls.__name__} flagged zero anomalies at extreme contamination"
 
 
 def test_ensemble_stacking_unsupervised(data):

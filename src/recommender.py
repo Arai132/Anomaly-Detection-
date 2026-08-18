@@ -288,6 +288,28 @@ DETECTORS: list[DetectorSpec] = [
         params={"nu": 0.05, "kernel": "rbf"},
     ),
     DetectorSpec(
+        id="sgd_one_class_svm",
+        name="SGD One-Class SVM",
+        short="Linear-time novelty detection — best for large datasets",
+        description=(
+            "A Nystroem RBF feature map followed by a linear SGD-trained one-class "
+            "SVM — approximates the same decision boundary as a kernel One-Class SVM "
+            "but scales to far more rows, since kernel SVM training cost grows "
+            "quadratically-to-cubically with dataset size."
+        ),
+        strengths=["Scales to large datasets", "Similar novelty detection to kernel SVM", "Much faster to train"],
+        weaknesses=["Slightly less accurate than exact kernel SVM", "Still sensitive to contamination in training data", "Requires nu/gamma tuning"],
+        scores={
+            "structure":      {"univariate": 1, "multivariate": 2, "time_series": 0},
+            "distribution":   {"gaussian": 2, "skewed": 2, "heavy_tailed": 1, "multimodal": 1, "uniform": 1, "categorical": -1, "sparse": 0, "unknown": 2},
+            "pattern":        {"stationary": 2, "trending": 0, "seasonal": 0, "random_walk": 0, "bursty": 1, "correlated": 2, "none": 1},
+            "dimensionality": {"low": 1, "medium": 2, "high": 2},
+            "anomaly_type":   {"point": 2, "contextual": 1, "collective": 0, "novelty": 3},
+            "labels":         {"none": 2, "few": 0},
+        },
+        params={"nu": 0.05, "gamma": "scale", "n_components": 100},
+    ),
+    DetectorSpec(
         id="pca",
         name="PCA Reconstruction Error",
         short="Linear dimensionality reduction — best for correlated high-dim data",

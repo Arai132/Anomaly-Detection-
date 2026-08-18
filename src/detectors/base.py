@@ -12,7 +12,7 @@ class BaseDetector(ABC):
         self.is_fitted = False
 
     @abstractmethod
-    def fit(self, X: pd.DataFrame | np.ndarray) -> "BaseDetector":
+    def fit(self, X: pd.DataFrame | np.ndarray, y: np.ndarray | None = None) -> "BaseDetector":
         pass
 
     @abstractmethod
